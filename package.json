@@ -1,0 +1,25 @@
+{
+  "name": "ingest-service",
+  "version": "1.0.0",
+  "description": "Service to ingest inbound data from shopify",
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "NODE_ENV=dev ts-node app/index.ts",
+    "prod": "NODE_ENV=prod tsc app/index.ts"
+  },
+  "author": "Joshua Grierson",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.7.3"
+  },
+  "dependencies": {
+    "@types/bluebird": "^3.5.29",
+    "@types/ioredis": "^4.14.3",
+    "@types/jsonwebtoken": "^8.3.5",
+    "bluebird": "^3.7.2",
+    "dotenv": "^8.2.0",
+    "ioredis": "^4.14.1",
+    "jsonwebtoken": "^8.5.1",
+    "ts-node": "^8.5.4"
+  }
+}
