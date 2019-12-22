@@ -1,3 +1,4 @@
 node_modules
 .redis
 yarn-error.log
+.env
