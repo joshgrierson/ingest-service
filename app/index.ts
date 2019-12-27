@@ -1,8 +1,8 @@
 import fs from "fs";
 import Redis from "ioredis";
 import express, { Request, Response, NextFunction } from "express";
-import IngestController from "controllers/ingest-controller";
-import { ServiceError } from "error";
+import IngestController from "./controllers/ingest-controller";
+import { ServiceError } from "./error";
 
 require("dotenv").config();
 
@@ -62,18 +62,13 @@ async function run() {
         await testRSAKeys();
         const redis: Redis.Redis = await setupRedis();
 
-        app.post("/ingest/:service", (req, res, next) => new IngestController({
+        app.post("/v1/api/ingest/:service", (req, res, next) => new IngestController({
             req,
             res,
             next,
             redis
         }));
 
-        app.use(function(err: ServiceError, req: Request, res: Response, next: NextFunction) {
-            console.error(err);
-            res.status(err.status).send(err);
-        });
-        
         app.listen(SERVICE_PORT, () => console.log("Ingest Service listening on port %d", SERVICE_PORT));
     } catch(ex) {
         console.error(`Ingest Service error: ${ex.stack}`);
