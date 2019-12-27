@@ -1,23 +1,22 @@
 import fs from "fs";
-import path from "path";
-import { Server } from "http";
 import Redis from "ioredis";
-import Bluebird from "bluebird";
+import express, { Request, Response, NextFunction } from "express";
+import IngestController from "controllers/ingest-controller";
+import { ServiceError } from "error";
 
-require("dotenv").config({
-    path: path.resolve(`${process.cwd()}/.env/.env-${process.env.NODE_ENV}`)
-});
-
-const http: Server = Bluebird.promisifyAll(require("http"));
+require("dotenv").config();
 
 const RSA_PRIVATE_KEY_PATH: string = ".rsa/key";
 const RSA_PUBLIC_KEY_PATH: string = ".rsa/key.pub";
+const SERVICE_PORT: number = process.env.SERVICE_PORT ? parseInt(process.env.SERVICE_PORT) : 3000;
 
 enum RedisEventType {
     error="error",
     connect="connect",
     reconnecting="reconnection"
 }
+
+const app = express();
 
 async function testRSAKeys(): Promise<boolean> {
     if (!fs.existsSync(RSA_PRIVATE_KEY_PATH) || !fs.existsSync(RSA_PUBLIC_KEY_PATH)) {
@@ -28,17 +27,22 @@ async function testRSAKeys(): Promise<boolean> {
 }
 
 async function setupRedis(): Promise<Redis.Redis> {
-    const redis: Redis.Redis = new Redis({
+    const redisOptions: any = {
         port: parseInt(process.env.REDIS_PORT),
-        host: process.env.REDIS_HOST,
-        password: process.env.REDIS_PASS
-    });
+        host: process.env.REDIS_HOST
+    };
+
+    if (process.env.REDIS_PASS) {
+        redisOptions.password = process.env.REDIS_PASS;
+    }
+
+    const redis: Redis.Redis = new Redis(redisOptions);
 
     const handler: (type: RedisEventType, err?: string) => void = (type: RedisEventType, err?: any) => {
         if (type === RedisEventType.error) {
             console.error(`Redis error occurred: ${err}`);
         } else if (type === RedisEventType.connect) {
-            console.log(`Redis message connected to: ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+            console.log(`Redis connected to: ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
         } else if (type === RedisEventType.reconnecting) {
             console.log(`Redis reconnecting to server: ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
         }
@@ -56,7 +60,21 @@ async function run() {
     
     try {
         await testRSAKeys();
-        const redisInstance: Redis.Redis = await setupRedis();
+        const redis: Redis.Redis = await setupRedis();
+
+        app.post("/ingest/:service", (req, res, next) => new IngestController({
+            req,
+            res,
+            next,
+            redis
+        }));
+
+        app.use(function(err: ServiceError, req: Request, res: Response, next: NextFunction) {
+            console.error(err);
+            res.status(err.status).send(err);
+        });
+        
+        app.listen(SERVICE_PORT, () => console.log("Ingest Service listening on port %d", SERVICE_PORT));
     } catch(ex) {
         console.error(`Ingest Service error: ${ex.stack}`);
         process.exit(1);

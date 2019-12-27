@@ -4,4 +4,4 @@ EXPOSE 6379
 
 VOLUME /.redis:/data
 
-CMD ["redis-server", "--appendonly yes", "--requirepass 4dnzP2gPYPVzWweTqyNIdEK7EIOhofMCwcFHa7kvUYs="]
+CMD ["redis-server", "--appendonly yes"]
