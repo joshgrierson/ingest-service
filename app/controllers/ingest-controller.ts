@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import services from "../services";
-import { Controller, ServiceStatus, ServiceMethod } from "../model";
+import { Controller, ServiceStatus, ServiceMethod, Service } from "../model";
 import { Redis } from "ioredis";
 import { ServiceError } from "../error";
 
@@ -17,8 +17,10 @@ export default class IngestController extends Controller {
     private exec(): void {
         try {
             if (this.isService()) {
-                this.getService()
-                    .exec(this.args.redis)
+                const service: Service = this.getService();
+
+                service.verify(this.args.req)
+                    .then(() => service.exec(this.args.redis))
                     .then(() => this.sendResponse(this.response, (this.args.req.method as ServiceMethod), ServiceStatus.OK))
                     .catch(err => this.sendResponse(err, (this.args.req.method as ServiceMethod)));
             } else {

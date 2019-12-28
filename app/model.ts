@@ -1,10 +1,12 @@
 import { Redis } from "ioredis";
-import { Response } from "express";
+import { Response, Request } from "express";
 import { ServiceError } from "error";
+import { IncomingHttpHeaders } from "http";
 
 export enum ServiceStatus {
     NotFound=404,
-    OK=200
+    OK=200,
+    NotAcceptable=406
 }
 
 export enum ServiceMethod {
@@ -18,6 +20,19 @@ export interface Parser {
     parse: () => void;
 }
 
+export enum ShopifyTopics {
+    ProductCreate="products/create",
+    ProductUpdate="products/update",
+    ProductDelete="products/delete"
+}
+
+export interface ShopifyHeaders extends IncomingHttpHeaders {
+    "x-shopify-topic": ShopifyTopics;
+    "x-shopify-hmac-sha256": string;
+    "x-shopify-shop-domain": string;
+    "x-shopify-api-version": string;
+}
+
 export abstract class Service {
     public constructor(protected tag: string) {}
 
@@ -26,6 +41,8 @@ export abstract class Service {
     }
 
     abstract exec(redis: Redis): Promise<any>;
+
+    abstract verify(req: Request): Promise<any>;
 }
 
 export interface Services {
@@ -56,6 +73,7 @@ export abstract class Controller {
     public sendResponse(data: any, method: ServiceMethod, status?: ServiceStatus): void {
         let response: any;
         let responseStatus: ServiceStatus;
+        console.log(data);
 
         if (data instanceof Error) {
             response = {
