@@ -59,7 +59,7 @@ export abstract class Controller {
 
         if (data instanceof Error) {
             response = {
-                error: data,
+                error: data.message,
                 meta: <ResponseOutput> {
                     status: (data as ServiceError).status,
                     method,

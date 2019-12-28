@@ -15,13 +15,17 @@ export default class IngestController extends Controller {
     }
 
     private exec(): void {
-        if (this.isService()) {
-            this.getService()
-                .exec(this.args.redis)
-                .then(() => this.sendResponse(ServiceStatus.OK, (this.args.req.method as ServiceMethod), this.response))
-                .catch(err => this.args.next(err));
-        } else {
-            this.sendResponse(new ServiceError(`Service ${this.serviceName} not found`, ServiceStatus.NotFound), (this.args.req.method as ServiceMethod));
+        try {
+            if (this.isService()) {
+                this.getService()
+                    .exec(this.args.redis)
+                    .then(() => this.sendResponse(this.response, (this.args.req.method as ServiceMethod), ServiceStatus.OK))
+                    .catch(err => this.sendResponse(err, (this.args.req.method as ServiceMethod)));
+            } else {
+                throw new ServiceError(`Service ${this.serviceName} not found`, ServiceStatus.NotFound);
+            }
+        } catch(ex) {
+            this.sendResponse(ex, (this.args.req.method as ServiceMethod));
         }
     }
 

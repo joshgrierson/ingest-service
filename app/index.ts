@@ -1,8 +1,7 @@
 import fs from "fs";
 import Redis from "ioredis";
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import IngestController from "./controllers/ingest-controller";
-import { ServiceError } from "./error";
 
 require("dotenv").config();
 
