@@ -73,7 +73,6 @@ export abstract class Controller {
     public sendResponse(data: any, method: ServiceMethod, status?: ServiceStatus): void {
         let response: any;
         let responseStatus: ServiceStatus;
-        console.log(data);
 
         if (data instanceof Error) {
             response = {
