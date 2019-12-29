@@ -40,7 +40,7 @@ export abstract class Service {
         console.log("%s: %s", this.tag, message);
     }
 
-    abstract exec(redis: Redis): Promise<any>;
+    abstract async exec(payload: {[key: string]: any}, redis: Redis): Promise<any>;
 
     abstract verify(req: Request): Promise<any>;
 }

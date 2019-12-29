@@ -8,9 +8,19 @@ export default class ShopifyService extends Service {
         super("Shopify Service");
     }
 
-    public exec(redis: Redis): Promise<any> {
+    public async exec(payload: {[key: string]: any}, redis: Redis): Promise<any> {
         this.log("Storing shopify products...");
-        return Promise.resolve();
+
+        let result: any;
+
+        if (payload && payload.id) {
+            result = await redis.set(payload.id, `${payload.title}:${payload.vendor}`);
+            console.log("Redis-Shopify response: %s", result);
+        } else {
+            throw new ServiceError("Payload does not contain [id]", ServiceStatus.NotAcceptable);
+        }
+
+        return result??Promise.resolve(payload);
     }
 
     public verify(req: Request): Promise<any> {

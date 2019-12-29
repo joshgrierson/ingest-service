@@ -20,8 +20,8 @@ export default class IngestController extends Controller {
                 const service: Service = this.getService();
 
                 service.verify(this.args.req)
-                    .then(() => service.exec(this.args.redis))
-                    .then(() => this.sendResponse(this.response, (this.args.req.method as ServiceMethod), ServiceStatus.OK))
+                    .then(() => service.exec(this.args.req.body, this.args.redis))
+                    .then(data => this.sendResponse(data, (this.args.req.method as ServiceMethod), ServiceStatus.OK))
                     .catch(err => this.sendResponse(err, (this.args.req.method as ServiceMethod)));
             } else {
                 throw new ServiceError(`Service ${this.serviceName} not found`, ServiceStatus.NotFound);
@@ -29,11 +29,5 @@ export default class IngestController extends Controller {
         } catch(ex) {
             this.sendResponse(ex, (this.args.req.method as ServiceMethod));
         }
-    }
-
-    private get response(): any {
-        return {
-            cached: true
-        };
     }
 }

@@ -1,6 +1,7 @@
 import fs from "fs";
 import Redis from "ioredis";
 import express from "express";
+import bodyParser from "body-parser";
 import IngestController from "./controllers/ingest-controller";
 
 require("dotenv").config();
@@ -16,6 +17,8 @@ enum RedisEventType {
 }
 
 const app = express();
+
+app.use(bodyParser.json());
 
 async function testRSAKeys(): Promise<boolean> {
     if (!fs.existsSync(RSA_PRIVATE_KEY_PATH) || !fs.existsSync(RSA_PUBLIC_KEY_PATH)) {
