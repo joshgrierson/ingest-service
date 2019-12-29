@@ -1,4 +1,5 @@
 node_modules
 .redis
+.rsa
 yarn-error.log
 .env
