@@ -6,7 +6,8 @@ import { IncomingHttpHeaders } from "http";
 export enum ServiceStatus {
     NotFound=404,
     OK=200,
-    NotAcceptable=406
+    NotAcceptable=406,
+    Error=400
 }
 
 export enum ServiceMethod {
@@ -16,8 +17,8 @@ export enum ServiceMethod {
     DELETE="DELETE"
 }
 
-export interface Parser {
-    parse: () => void;
+export enum RedisReply {
+    OK="OK"
 }
 
 export enum ShopifyTopics {
@@ -33,6 +34,12 @@ export interface ShopifyHeaders extends IncomingHttpHeaders {
     "x-shopify-api-version": string;
 }
 
+export interface ShopifyProductBase {
+    title: string;
+    vendor: string;
+    product_type: string;
+}
+
 export abstract class Service {
     public constructor(protected tag: string) {}
 
@@ -43,6 +50,10 @@ export abstract class Service {
     abstract async exec(payload: {[key: string]: any}, redis: Redis): Promise<any>;
 
     abstract verify(req: Request): Promise<any>;
+
+    protected redisSave(redis: Redis, data: any): void {
+        redis.bgsave().then(saved => this.log(`${saved}\nRedis saving ['${data}']`));
+    }
 }
 
 export interface Services {
@@ -75,16 +86,18 @@ export abstract class Controller {
         let responseStatus: ServiceStatus;
 
         if (data instanceof Error) {
+            let localStatus: ServiceStatus = (data as ServiceError).status??ServiceStatus.Error;
+
             response = {
                 error: data.message,
                 meta: <ResponseOutput> {
-                    status: (data as ServiceError).status,
+                    status: localStatus,
                     method,
                     path: this.path
                 }
             };
 
-            responseStatus = (data as ServiceError).status;
+            responseStatus = localStatus;
             console.error(data);
         } else {
             response = {
