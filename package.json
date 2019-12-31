@@ -18,12 +18,14 @@
     "@types/ioredis": "^4.14.3",
     "@types/jsonwebtoken": "^8.3.5",
     "@types/node": "^12.12.21",
+    "@types/uuid": "^3.4.6",
     "bluebird": "^3.7.2",
     "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "ioredis": "^4.14.1",
     "jsonwebtoken": "^8.5.1",
-    "ts-node": "^8.5.4"
+    "ts-node": "^8.5.4",
+    "uuid": "^3.3.3"
   }
 }

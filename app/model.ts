@@ -82,6 +82,7 @@ export interface Services {
 export interface ResponseOutput {
     status: ServiceStatus;
     method: ServiceMethod;
+    count?: number;
     path: string;
 }
 
@@ -127,6 +128,12 @@ export abstract class Controller {
                     path: this.path
                 }
             };
+
+            if (Array.isArray(data)) {
+                response.meta.count = data.length;
+            } else if (typeof data === "object") {
+                response.meta.count = Object.keys(data).length;
+            }
 
             responseStatus = status;
         }

@@ -1,5 +1,6 @@
 import { Redis } from "ioredis";
-import { Service, ServiceStatus, RedisReply, ShopifyProductBase } from "../model";
+import uuidv4 from "uuid/v4";
+import { Service, ServiceStatus, RedisReply } from "../model";
 import { ServiceError } from "../error";
 
 export default class ShopifyService extends Service {
@@ -18,20 +19,25 @@ export default class ShopifyService extends Service {
         let results: {};
 
         if (payload && payload.length > 0) {
-            results = await redis.pipeline((payload.map(p => ["hmset", `${this.domain}:${p.id}`, ...[
-                "title", p.title,
-                "vendor", p.vendor,
-                "product_type", p.product_type
-            ]]) as [])).exec().then(results => this.formatResult(payload, results));
+            const redisP: [] = (payload.map(p => {
+                const uuid: string = uuidv4();
 
-            // if (results !== RedisReply.OK) {
-            //     throw new ServiceError(`Inserting product['${payload.id}'] into redis failed`);
-            // }
+                return ["hmset", `${this.domain}:${p.id}`, ...[
+                    "uid", uuid,
+                    "title", p.title,
+                    "vendor", p.vendor,
+                    "product_type", p.product_type
+                ]]
+            }) as []);
 
-            console.log(results);
+            results = await redis.pipeline(redisP).exec()
+                .then(results => this.formatResult(payload, results, redisP.map(u => u[2])));
+
+            if (results && Object.keys(results).filter(k => results[k].status).length === Object.keys(results).length) {
+                throw new ServiceError("Inserting products into redis failed");
+            }
+
             this.redisSave(redis, JSON.stringify(results));
-
-            // this.log(`Redis inserting product['${payload.id}'] status: ${result}`);
         } else {
             throw new ServiceError("Payload does not contain [id]", ServiceStatus.NotAcceptable);
         }
@@ -39,7 +45,7 @@ export default class ShopifyService extends Service {
         return results??Promise.resolve(payload);
     }
 
-    private formatResult(payload: Array<{[key: string]: any}>, results: Array<[Error, any]>): Promise<{}> {
+    private formatResult(payload: Array<{[key: string]: any}>, results: Array<[Error, any]>, uuids: Array<string>): Promise<{}> {
         return Promise.resolve(results.reduce((acc, result, idx) => {
             const p: any = payload[idx];
 
@@ -50,6 +56,7 @@ export default class ShopifyService extends Service {
                 };
             } else if (result[1] && result[1] === RedisReply.OK) {
                 acc[p.id] = {
+                    "uid": uuids[idx],
                     "title": p.title,
                     "vendor": p.vendor,
                     "product_type": p.product_type

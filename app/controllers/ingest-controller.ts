@@ -37,11 +37,11 @@ export default class IngestController extends Controller {
         const body: Array<any> = this.args.req.body;
 
         if (!body || !Array.isArray(body)) {
-            throw new Error(`Post body requires array with schema [${Object.keys(service.schema).join()}]`);
+            throw new ServiceError(`Post body requires array with schema [${Object.keys(service.schema).join()}]`, ServiceStatus.NotAcceptable);
         } else if (body && Array.isArray(body) && !service.validateSchema(body[0])) {
-            throw new Error(`Invalid entity schema, requires schema [${Object.keys(service.schema).join()}]`);
+            throw new ServiceError(`Invalid entity schema, requires schema [${Object.keys(service.schema).join()}]`, ServiceStatus.NotAcceptable);
         } else if (body.length > 15) {
-            throw new Error("Entity payload is too large, cannot be larger than 15 count");
+            throw new ServiceError("Entity payload is too large, cannot be larger than 15 count", ServiceStatus.Error);
         } else {
             return Promise.resolve(null);
         }
