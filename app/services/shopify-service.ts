@@ -1,87 +1,62 @@
 import { Redis } from "ioredis";
-import { Service, ShopifyHeaders, ShopifyTopics, ServiceStatus, RedisReply, ShopifyProductBase } from "../model";
-import { Request } from "express";
+import { Service, ServiceStatus, RedisReply, ShopifyProductBase } from "../model";
 import { ServiceError } from "../error";
 
 export default class ShopifyService extends Service {
-    private shopDomain: string;
-
     public constructor() {
-        super("Shopify Service");
+        super("Shopify Service", {
+            id: "number",
+            title: "string",
+            vendor: "string",
+            product_type: "string"
+        });
     }
 
-    public async exec(payload: {[key: string]: any}, redis: Redis): Promise<any> {
+    public async exec(payload: Array<{[key: string]: any}>, redis: Redis): Promise<any> {
         this.log("Storing shopify products...");
 
-        let result: any;
+        let results: {};
 
-        if (payload && payload.id) {
-            await this.validateProps(payload);
+        if (payload && payload.length > 0) {
+            results = await redis.pipeline((payload.map(p => ["hmset", `${this.domain}:${p.id}`, ...[
+                "title", p.title,
+                "vendor", p.vendor,
+                "product_type", p.product_type
+            ]]) as [])).exec().then(results => this.formatResult(payload, results));
 
-            const data: ShopifyProductBase = {
-                title: payload.title,
-                vendor: payload.vendor,
-                product_type: payload.product_type
-            };
+            // if (results !== RedisReply.OK) {
+            //     throw new ServiceError(`Inserting product['${payload.id}'] into redis failed`);
+            // }
 
-            result = await redis.hmset(`${this.shopDomain}.${payload.id}`, data);
-            this.redisSave(redis, JSON.stringify(data));
+            console.log(results);
+            this.redisSave(redis, JSON.stringify(results));
 
-            this.log(`Redis result response: ${result}`);
+            // this.log(`Redis inserting product['${payload.id}'] status: ${result}`);
         } else {
             throw new ServiceError("Payload does not contain [id]", ServiceStatus.NotAcceptable);
         }
 
-        return result??Promise.resolve(payload);
+        return results??Promise.resolve(payload);
     }
 
-    public verify(req: Request): Promise<any> {
-        const headers: ShopifyHeaders = (req.headers as ShopifyHeaders);
-        const verified: {[key: string]: boolean} = {
-            topicHeader: false,
-            hmac: false,
-            shopDomain: false,
-            apiVersion: false
-        };
-        
-        if (headers["x-shopify-topic"] && (headers["x-shopify-topic"] === ShopifyTopics.ProductCreate || headers["X-Shopify-Topic"] === ShopifyTopics.ProductUpdate)) {
-            verified.topicHeader = true;
-        }
+    private formatResult(payload: Array<{[key: string]: any}>, results: Array<[Error, any]>): Promise<{}> {
+        return Promise.resolve(results.reduce((acc, result, idx) => {
+            const p: any = payload[idx];
 
-        if (headers["x-shopify-hmac-sha256"]) {
-            verified.hmac = true;
-        }
+            if (result[0]) {
+                acc[p.id] = {
+                    status: "failed",
+                    err: result[0]
+                };
+            } else if (result[1] && result[1] === RedisReply.OK) {
+                acc[p.id] = {
+                    "title": p.title,
+                    "vendor": p.vendor,
+                    "product_type": p.product_type
+                };
+            }
 
-        if (headers["x-shopify-shop-domain"] && headers["x-shopify-shop-domain"].includes(".myshopify.com")) {
-            verified.shopDomain = true;
-        }
-
-        if (headers["x-shopify-api-version"] && headers["x-shopify-api-version"].match(/[0-9]{4}\-[0-9]{2}/g)) {
-            verified.apiVersion = true;
-        }
-
-        if (verified.topicHeader && verified.hmac && verified.shopDomain && verified.apiVersion) {
-            this.shopDomain = headers["x-shopify-shop-domain"];
-
-            return Promise.resolve();
-        } else {
-            throw new ServiceError("Shopify headers not valid", ServiceStatus.NotAcceptable);
-        }
-    }
-
-    private validateProps(data: any): Promise<boolean> {
-        if (!data.title || data.title.length === 0) {
-            throw new Error(`Entity '${data.id}' missing prop 'title'`);
-        }
-
-        if (!data.vendor || data.vendor.length === 0) {
-            throw new Error(`Entity '${data.id}' missing prop 'vendor'`);
-        }
-
-        if (!data.product_type || data.product_type.length === 0) {
-            throw new Error(`Entity '${data.id}' missing prop 'product_type'`);
-        }
-
-        return Promise.resolve(true);
+            return acc;
+        }, {}));
     }
 }

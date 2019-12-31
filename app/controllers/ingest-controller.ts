@@ -19,7 +19,9 @@ export default class IngestController extends Controller {
             if (this.isService()) {
                 const service: Service = this.getService();
 
-                service.verify(this.args.req)
+                service.setDomain("test.myshopify.com");
+
+                this.validateBody(service)
                     .then(() => service.exec(this.args.req.body, this.args.redis))
                     .then(data => this.sendResponse(data, (this.args.req.method as ServiceMethod), ServiceStatus.OK))
                     .catch(err => this.sendResponse(err, (this.args.req.method as ServiceMethod)));
@@ -28,6 +30,20 @@ export default class IngestController extends Controller {
             }
         } catch(ex) {
             this.sendResponse(ex, (this.args.req.method as ServiceMethod));
+        }
+    }
+
+    private async validateBody(service: Service): Promise<string> {
+        const body: Array<any> = this.args.req.body;
+
+        if (!body || !Array.isArray(body)) {
+            throw new Error(`Post body requires array with schema [${Object.keys(service.schema).join()}]`);
+        } else if (body && Array.isArray(body) && !service.validateSchema(body[0])) {
+            throw new Error(`Invalid entity schema, requires schema [${Object.keys(service.schema).join()}]`);
+        } else if (body.length > 15) {
+            throw new Error("Entity payload is too large, cannot be larger than 15 count");
+        } else {
+            return Promise.resolve(null);
         }
     }
 }

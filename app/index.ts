@@ -18,7 +18,7 @@ enum RedisEventType {
 
 const app = express();
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: "250kb"}));
 
 async function testRSAKeys(): Promise<boolean> {
     if (!fs.existsSync(RSA_PRIVATE_KEY_PATH) || !fs.existsSync(RSA_PUBLIC_KEY_PATH)) {
