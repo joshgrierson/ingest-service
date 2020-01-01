@@ -1,8 +1,6 @@
 import { Redis } from "ioredis";
 import uuidv4 from "uuid/v4";
-import { ServiceStatus, RedisReply } from "share/lib/models";
-import { Service } from "share/lib/services";
-import ServiceError from "share/lib/error";
+import { ServiceStatus, RedisReply, Service, ServiceError } from "share";
 
 export default class ShopifyService extends Service {
     public constructor() {
@@ -32,7 +30,7 @@ export default class ShopifyService extends Service {
             }) as []);
 
             results = await redis.pipeline(redisP).exec()
-                .then(results => this.formatResult(payload, results, redisP.map(u => u[2])));
+                .then(results => this.formatResult(payload, results, redisP.map(u => u[3])));
 
             if (results && Object.keys(results).filter(k => results[k].status).length === Object.keys(results).length) {
                 throw new ServiceError("Inserting products into redis failed");
@@ -51,12 +49,12 @@ export default class ShopifyService extends Service {
             const p: any = payload[idx];
 
             if (result[0]) {
-                acc[p.id] = {
+                acc[`${this.domain}:${p.id}`] = {
                     status: "failed",
                     err: result[0]
                 };
             } else if (result[1] && result[1] === RedisReply.OK) {
-                acc[p.id] = {
+                acc[`${this.domain}:${p.id}`] = {
                     "uid": uuids[idx],
                     "title": p.title,
                     "vendor": p.vendor,
