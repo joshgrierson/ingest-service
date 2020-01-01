@@ -13,7 +13,7 @@ const SERVICE_PORT: number = process.env.SERVICE_PORT ? parseInt(process.env.SER
 enum RedisEventType {
     error="error",
     connect="connect",
-    reconnecting="reconnection"
+    reconnecting="reconnecting"
 }
 
 const app = express();
