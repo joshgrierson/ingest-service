@@ -25,6 +25,7 @@
     "express": "^4.17.1",
     "ioredis": "^4.14.1",
     "jsonwebtoken": "^8.5.1",
+    "share": "ssh://git@bitbucket.org:encreddesign/share.git",
     "ts-node": "^8.5.4",
     "uuid": "^3.3.3"
   }

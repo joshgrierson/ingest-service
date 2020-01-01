@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import services from "../services";
-import { Controller, ServiceStatus, ServiceMethod, Service } from "../model";
+import { ServiceStatus, ServiceMethod } from "share/lib/models";
+import { Controller } from "share/lib/controllers";
+import { Service } from "share/lib/services";
 import { Redis } from "ioredis";
-import { ServiceError } from "../error";
+import ServiceError from "share/lib/error";
 
 export default class IngestController extends Controller {
     private serviceName: string;

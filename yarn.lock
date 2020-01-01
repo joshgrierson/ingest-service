@@ -599,6 +599,13 @@ setprototypeof@1.1.1:
   resolved "https://registry.yarnpkg.com/setprototypeof/-/setprototypeof-1.1.1.tgz#7e95acb24aa92f5885e0abef5ba131330d4ae683"
   integrity sha512-JvdAWfbXeIGaZ9cILp38HntZSFSo3mWg6xGcJJsd+d4aRMOqauag1C63dJfDw7OaMYwEbHMOxEZ1lqVRYP2OAw==
 
+"share@ssh://git@bitbucket.org:encreddesign/share.git":
+  version "1.0.0"
+  resolved "ssh://git@bitbucket.org:encreddesign/share.git#2985c6578c46e583109b3353e54922e993773e4f"
+  dependencies:
+    "@types/express" "^4.17.2"
+    "@types/ioredis" "^4.14.3"
+
 source-map-support@^0.5.6:
   version "0.5.16"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.16.tgz#0ae069e7fe3ba7538c64c98515e35339eac5a042"

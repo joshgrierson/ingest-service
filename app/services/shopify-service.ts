@@ -1,7 +1,8 @@
 import { Redis } from "ioredis";
 import uuidv4 from "uuid/v4";
-import { Service, ServiceStatus, RedisReply } from "../model";
-import { ServiceError } from "../error";
+import { ServiceStatus, RedisReply } from "share/lib/models";
+import { Service } from "share/lib/services";
+import ServiceError from "share/lib/error";
 
 export default class ShopifyService extends Service {
     public constructor() {
