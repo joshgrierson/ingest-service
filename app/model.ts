@@ -21,19 +21,6 @@ export enum RedisReply {
     OK="OK"
 }
 
-export enum ShopifyTopics {
-    ProductCreate="products/create",
-    ProductUpdate="products/update",
-    ProductDelete="products/delete"
-}
-
-export interface ShopifyHeaders extends IncomingHttpHeaders {
-    "x-shopify-topic": ShopifyTopics;
-    "x-shopify-hmac-sha256": string;
-    "x-shopify-shop-domain": string;
-    "x-shopify-api-version": string;
-}
-
 export interface ShopifyProductBase {
     title: string;
     vendor: string;
